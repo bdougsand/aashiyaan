@@ -5,11 +5,13 @@ import YouTube from 'react-native-youtube';
 import { videos } from './config';
 
 import AboutPage from "./page/About.js";
+import RecordVideoPage from "./page/RecordVideo.js";
 
-import TextButton from "./component/TextButton.js";
+import { TextButton } from "./component/Button.js";
 
 
 const youtubeApiKey = process.env.YOUTUBE_API_KEY;
+console.disableYellowBox = true;
 
 class Player extends React.Component {
   render() {
@@ -49,6 +51,7 @@ class ObjectChooser extends React.Component {
               </View>
               <View style={styles.buttonContainer}>
                   <TextButton navigation={navigation} route="About">About</TextButton>
+                  <TextButton navigation={navigation} route="Record">Record</TextButton>
               </View>
           </View>
     );
@@ -58,7 +61,8 @@ class ObjectChooser extends React.Component {
 export default StackNavigator({
   Home: { screen: ObjectChooser },
   Player: { screen: Player },
-  About: AboutPage.navConfig
+    About: AboutPage.navConfig,
+    Record: RecordVideoPage.navConfig
 }, {
 
     headerMode: "none"

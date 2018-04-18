@@ -13,4 +13,11 @@ export const videos = [
   },
 ];
 
+export const camera = {
+    permissionMessage: null,
+    quality: "480p",
+    maxDuration: 600, // in seconds
+    maxFileSize: 50 * 1024 * 1024 // in bytes
+}
+
 export default { videos };
