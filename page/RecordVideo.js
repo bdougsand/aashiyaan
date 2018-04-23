@@ -27,8 +27,17 @@ export class RecordVideo extends Component {
             capturingAudio: true,
             facing: BACK,
             zoom: 0,
-            recording: false
+            recording: false,
+            orientation: "landscape"
         };
+    }
+
+    onLayout = (e) => {
+        let {width, height} = e.nativeEvent.layout;
+
+        this.setState({
+            orientation: (width > height) ? "landscape" : "portrait"
+        });
     }
 
     flipDirection = () => {
@@ -36,9 +45,9 @@ export class RecordVideo extends Component {
         this.setState({facing: facing === FRONT ? BACK : FRONT})
     }
 
-    incZoom = (change) => {
+    incZoom(change) {
         let {zoom} = this.state,
-            newZoom = Math.min(1, Math.max(0, zoom + change));
+            newZoom = Math.min(this.props.maxZoom, Math.max(0, zoom + change));
 
         if (newZoom === zoom) {
             // TODO Possibly run callbacks
@@ -46,6 +55,10 @@ export class RecordVideo extends Component {
 
         this.setState({ zoom: newZoom });
     }
+
+    zoomIn = () => { this.incZoom(0.01); }
+
+    zoomOut = () => { this.incZoom(-0.01); }
 
     beginRecording = () => {
         if (this.props.onRecordingBegan)
@@ -80,10 +93,30 @@ export class RecordVideo extends Component {
         this.setState({ capturingAudio: false });
     }
 
-    renderZoomControls = () => {
+    renderZoomControls() {
+        let {zoom} = this.state,
+            {maxZoom} = this.props;
+
+        return (
+            <View style={{flexDirection: "column"}}>
+                <Button onPress={this.zoomIn} disabled={zoom >= maxZoom}>
+                    +
+                </Button>
+                <Button onPress={this.zoomOut} disabled={zoom === 0}>
+                    -
+                </Button>
+            </View>
+        )
+    }
+
+    renderFlipControls = () => {
         let {zoom} = this.state;
 
-
+        return (
+            <Button onPress={this.flipDirection}>
+                {"\u21A9"}
+            </Button>
+        );
     }
 
     renderButton = () => {
@@ -92,32 +125,42 @@ export class RecordVideo extends Component {
         return (
             <Button textStyles={recording ? styles.recording : styles.waiting}
                     onPress={recording ? this.endRecording : this.beginRecording}>
-                { recording ? "Stop" : "Start" }
+                { recording ? "X" : "R" }
             </Button>
         );
     }
 
     render() {
-        let {facing, zoom} = this.state;
-        console.log("Hello")
+        let {facing, zoom, orientation} = this.state,
+            orientationStyles = styles[orientation],
+            buttonStyles = styles[`${orientation}Buttons`];
 
         return (
-            <View style={styles.container}>
+            <View style={[styles.container, orientationStyles]}
+                  onLayout={this.onLayout}>
                 <Camera
-                    ref={ref => {this.camera = ref;}}
+                    ref={ref => { this.camera = ref; }}
                     style = {styles.preview}
-                    type={BACK}
+                    type={facing}
+                    zoom={zoom}
                     flashMode={FLASH_ON}
                     permissionDialogTitle={"Permission to use camera"}
                     permissionDialogMessage={camera.permissionMessage}
                 />
-                <View style={{flex: 0, flexDirection: 'row', justifyContent: 'center',}}>
+                <View style={[styles.buttons, buttonStyles]}>
+                    {this.renderZoomControls()}
                     {this.renderButton()}
+                    {this.renderFlipControls()}
                 </View>
             </View>
         );
     }
 }
+
+RecordVideo.defaultProps = {
+    maxZoom: 0.1
+};
+
 
 export default class RecordVideoPage extends Component {
     goToNextPage = (uri) => {
@@ -132,13 +175,14 @@ export default class RecordVideoPage extends Component {
 
     render() {
         let {navigation, ...props} = this.props;
-
         return (
-            <RecordVideo onRecordingComplete={this.goToNextPage}
-                         {...props}/>
+            <RecordVideo
+                onRecordingComplete={this.goToNextPage}
+                {...props} />
         );
     }
 }
+
 
 const styles = StyleSheet.create({
     container: {
@@ -146,6 +190,27 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         backgroundColor: 'black'
     },
+    landscape: {
+        flexDirection: "row"
+    },
+    portrait: {
+        flexDirection: "column"
+    },
+
+    buttons: {
+        flex: 0,
+        justifyContent: 'center'
+    },
+
+    landscapeButtons: {
+        flexDirection: "column",
+        alignItems: "center"
+    },
+
+    portraitButtons: {
+        flexDirection: 'row',
+    },
+
     preview: {
         flex: 1,
         justifyContent: 'flex-end',
